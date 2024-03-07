@@ -1,0 +1,13 @@
+name: rec_sys_app
+channels:
+  - defaults
+dependencies:
+  - python=3.11.0
+  - ipython=8.20.0
+  - numpy=1.26.4
+  - pandas=2.1.4
+  - scikit-learn=1.2.2
+  - pip=23.3.1
+  - catboost=1.2
+  - jupyter=1.0
+  - jupyterlab=4.0.8
