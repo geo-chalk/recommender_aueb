@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  rec_sys:
+    build:
+      context: .
+      dockerfile: setup/Dockerfile
+#    volumes:
+#      - .:/workspace
+    ports:
+      - "8989:8989"
+      - "8081:8081"
+#    command: "python src/main.py --skip-training"

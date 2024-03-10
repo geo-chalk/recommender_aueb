@@ -5,7 +5,6 @@ FROM $BASEIMAGE as base
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
-ENV JUPYTER_PORT 8989
 
 # ------ Set up workspace -------- #
 RUN true && apt-get update
@@ -23,23 +22,18 @@ RUN true \
     && python -m pip install \
       ipython==8.20.0 \
       numpy==1.26.4 \
-      pandas==2.1.4 \
-      scikit-learn==1.2.2 \
-      catboost==1.2 \
-      jupyter==1.0 \
-      jupyterlab==4.0.8
+      fastapi==0.110.0 \
+      uvicorn==0.28.0
 
 # --- pull official base image --- #
 RUN mkdir /workspace
 
 # --- Make temp file for source code --- #
 COPY ./src /workspace/src
-COPY ./data /workspace/data
+
 
 # --- Set Workspace --- #
 WORKDIR "/workspace"
 
-EXPOSE 8989
-
 # --- Start Jupyter Notebook --- #
-CMD ["jupyter", "notebook", "--ip", "0.0.0.0", "--no-browser", "--allow-root"]
+CMD ["uvicorn", "--app-dir", "src", "main_app:app", "--reload", "--host", "0.0.0.0", "--port", "8081"]

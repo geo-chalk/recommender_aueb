@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 
 from recommender_app.generators import User, Restaurant
+from recommender_app.utils.variables import CUISINES
 
 
 class RatingsGenerator:
@@ -28,7 +29,7 @@ class RatingsGenerator:
     def _generate_users_segment(user_num: int = 1000,
                                 postcode_num: int = 50,
                                 usr_age: Tuple[int, int] = (60, 7),
-                                usr_cuisines: Tuple = ('Pizza', 'Burger', 'Pasta', 'Souvlaki', 'Sushi', 'Chinese'),
+                                usr_cuisines: Tuple = CUISINES,
                                 usr_cuisines_num: Tuple = (1, 1)
                                 ) -> List[User]:
         """
@@ -67,6 +68,24 @@ class RatingsGenerator:
 
     @staticmethod
     def segment_1(_user: User, _restaurant: Restaurant) -> Tuple[int, int]:
+        """
+        This function evaluates a restaurant based on a user's preferences and returns a rating and count.
+
+        * The restaurant must offer the user's single favorite cuisine.
+        * The restaurant should have an average rating over 4.
+        * The restaurant's delivery time should be less than 35 minutes.
+        * There is a 50% random chance of assigning a positive rating.
+        * If the restaurant has an offer, there's an additional 60% random chance of assigning a positive rating.
+        * A "consistency switch" exists with a 10% chance that can invert the rating.
+
+        Args:
+            _user (User): The user object containing user preferences.
+            _restaurant (Restaurant): The restaurant object containing restaurant details.
+
+        Returns:
+            A tuple where the first element is the rating (1 or -1) and the second element is the count (0 or 1)
+                which increments with each rating.
+        """
         rating, cnt = 0, 0  # initialize to negative rating
 
         # if the restaurant has my single favorite cuisine, and a rating over 4 and a delivery time<35 min
@@ -85,6 +104,29 @@ class RatingsGenerator:
 
     @staticmethod
     def segment_2(_user: User, _restaurant: Restaurant) -> Tuple[int, int]:
+        """
+            This function evaluates a restaurant based on a user's preferences and returns a rating and count.
+
+            * The restaurant must offer any of the user's favorite cuisines.
+            * The restaurant should not have extra delivery costs.
+            * If the restaurant's price range is '$', it should have an average rating over 3.5.
+            * If the restaurant's price range is '$$', it should have an average rating over 4.
+            * If the restaurant's price range is '$$$', it should have an average rating over 4.5.
+            * There is a 50% random chance of assigning a positive rating.
+            * If the restaurant has an offer and its price range is either '$' or '$$', there's an additional
+                60% random chance of assigning a positive rating.
+            * If the restaurant has an offer and its price range is '$$$', there's an additional
+                80% random chance of assigning a positive rating.
+            * A "consistency switch" exists with a 20% chance that can invert the rating.
+
+            Args:
+                _user (User): The user object containing user preferences.
+                _restaurant (Restaurant): The restaurant object containing restaurant details.
+
+            Returns:
+                A tuple where the first element is the rating (1 or -1) and the second element is the count (0 or 1)
+                    which increments with each rating.
+            """
         rating, cnt = 0, 0  # initialize to negative rating
 
         # if the restaurant has my single favorite cuisine, and a rating over 4 and a delivery time<35 min
@@ -112,6 +154,15 @@ class RatingsGenerator:
                          segment_id: str,
                          **kwargs
                          ) -> Path:
+        """
+        Generates user data for a specific segment, assigns ratings to restaurants and writes the data to a CSV file.
+        Args:
+            restaurants: A list of Restaurant objects.
+            segment_id: The ID of the segment function to use for rating calculation.
+
+        Returns:
+            output_file: The path to the generated CSV file.
+        """
         # generate users
         users = self._generate_users_segment(**kwargs)
 
@@ -120,10 +171,9 @@ class RatingsGenerator:
         fw = output_file.open(mode='w')
         writer = csv.writer(fw)
 
-        writer.writerow(
-            ['age', 'gender', 'pcode', 'favorite_cuisine', 'restaurant_cuisine', 'price_range', 'has_self_del',
-             'has_offer', 'has_extra_del_cost', 'min_cost',
-             'avg_rating', 'avg_del_time', 'payment_methods', 'rating'])
+        writer.writerow(list(users[0].__dict__.keys())
+                        + list(restaurants[0].__dict__.keys())
+                        + ['rating'])
 
         cnt = 0
         total = 0
@@ -135,15 +185,13 @@ class RatingsGenerator:
 
             for rst in my_restaurants:  # for each restaurant
 
+                # call the corresponding ratings function by name.
                 rating, _cnt = getattr(self, segment_id)(_user=usr, _restaurant=rst)
                 cnt += _cnt
 
-                new_row = [usr.age, usr.gender, usr.pcode, usr.favorite_cuisine, rst.cuisine, rst.price_range,
-                           rst.has_self_del, rst.has_offer, rst.has_extra_del_cost,
-                           rst.min_cost, rst.avg_rating, rst.avg_del_time,
-                           rst.payment_methods, rating]
-
-                writer.writerow(new_row)
+                writer.writerow(list(usr.__dict__.values())
+                                + list(rst.__dict__.values())
+                                + [rating])
 
         fw.close()
 

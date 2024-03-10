@@ -1,11 +1,19 @@
 """
 Host the dataclasses which describe the users and restaurants
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
 
 @dataclass
-class Restaurant:
+class Base:
+    """Base project dataclass"""
+    @classmethod
+    def get_categorical_cols(cls):
+        return [field.name for field in fields(cls) if field.type is list]
+
+
+@dataclass
+class Restaurant(Base):
     cuisine: list
     price_range: str
     has_self_del: bool
@@ -18,7 +26,7 @@ class Restaurant:
 
 
 @dataclass
-class User:
+class User(Base):
     gender: str
     age: int
     pcode: str

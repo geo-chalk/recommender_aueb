@@ -24,7 +24,7 @@ def generate_restaurants(cuisines: Tuple[str] = ('Pizza', 'Burger', 'Pasta', 'So
 
     Args:
         cuisines: A tuple of possible cuisine types.
-        max_cuisines: The maximun allowed number of cuisines per restaurant.
+        max_cuisines: The maximum allowed number of cuisines per restaurant.
         price_samples: A tuple representing the probability distribution of price ranges.
         has_extra_del_cost_prob: The probability that a restaurant has extra delivery cost.
         min_cost: A tuple representing the mean and standard deviation of the minimum cost.

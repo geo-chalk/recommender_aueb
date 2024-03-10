@@ -4,6 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 from sklearn.preprocessing import MultiLabelBinarizer
+from recommender_app.generators import Restaurant, User
 
 
 class DataPreProcessor:
@@ -56,21 +57,24 @@ class DataPreProcessor:
         """
         self.df[column_name] = self.df[column_name].apply(lambda x: ast.literal_eval(x) if isinstance(x, str) else x)
 
-    def process(self):
+    def process(self, categorical_columns: List[str]):
+        """
+        Processes the data frame by converting string representations of lists to actual lists,
+        one-hot encoding each list-type column, and splitting the data into training and testing sets.
+        """
         # Convert string representations of lists to actual lists for all list-type columns
-        list_columns = ['favorite_cuisine', 'restaurant_cuisine', 'payment_methods']
-        for column in list_columns:
+        for column in categorical_columns:
             self._convert_string_to_list(column)
 
         # One-hot encode each list-type column
-        for column in list_columns:
+        for column in categorical_columns:
             mlb = MultiLabelBinarizer()
             expanded = mlb.fit_transform(self.df[column])
             encoded_df = pd.DataFrame(expanded, columns=[f"{column}_{cls}" for cls in mlb.classes_])
             self.df = self.df.join(encoded_df)
 
         # Drop the original list-type columns if they are no longer needed
-        self.df.drop(list_columns, axis=1, inplace=True)
+        self.df.drop(categorical_columns, axis=1, inplace=True)
 
         # Split the data into training and testing sets
         return self.df

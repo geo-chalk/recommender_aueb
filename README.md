@@ -6,7 +6,7 @@ Migrating from Jupyter Notebooks to Python Applications
 Course Material for Recommender Systems  (INF499) - MSc Data Science
 
 ## Set up environments
-### Step 1:
+### Option 1:
 
 Manually create the environment and add dependencies as the project is being worked.
 This is a good option to start building the application, as you won't know beforehand
@@ -15,7 +15,7 @@ which libraries you are going to use.
 
 `conda activate rec_sys_app`
 
-### Step 2:
+### Option 2:
 After finishing the project, create a conda environment, with the libraries you have used in the project:
 
 Reference file:
@@ -41,20 +41,73 @@ conda env create -f setup/conda_env.yml
 conda activate rec_sys_app
 ```
 
-### Step 3:
-Use docker (TBU)
+### Option 3:
+Use docker:
 
-## Set up folder structure
+1. cd to the project root.
+2. Build the docker image
+
+```
+docker build -t aueb:latest -f setup/Dockerfile .
+```
+
+3. Run the container. For local dev use the 2nd option, so that the changes made in your code
+   are synced with the container.
+```
+docker run -d --name aueb_docker -it aueb:latest
+```
+
+```
+docker run -d -v .:/workspace --name aueb_docker -it aueb:latest
+```
+
+4. Run the python script. You can either include or exclude the --skip-training flag
+
+```
+docker exec -it aueb_docker python src/main.py --skip-training
+```
+
+To access the notebooks make sure that there is not another service running 
+in the port 8989 (which is defined in the Dockerfile) and run the following command
+in step 3 instead:
+```
+docker run -d -v .:/workspace --name aueb_docker -p 8989:8989 -it aueb:latest
+```
+
+To get the jupyter access token, either get the token from docker desktop console
+or run:
+```
+docker logs aueb_docker
+```
+
+
+## Best Practices
+
+### Set up folder structure
 There are multiple ways to set up a python environment. Usually, the code 
 is maintained under the `./src` folder. Inside the `src` folder, 
 more folders (modules) should be places, each of which should have a common *'theme'*.
 
-## Clean Code
+```
+.
+├── archive
+│   └── src
+├── data
+│   ├── model_registry
+│   ├── processed
+│   └── raw
+├── notebooks
+├── setup
+├── src
+│   └── recommender_app
+└── tests
+```
+### Clean Code
 
 For more info see: https://peps.python.org/pep-0008/
 
 ### Use OOP approach 
-Try using Object Oriented Programming approaches, but using classes and functions.
+Try using Object-Oriented-Programming approaches, but using classes and functions.
 Methods and Objects should have easy to understand names and executes small functions.
 Moreover, any possible argument that is subject to change should be part of the method arguments.
 
