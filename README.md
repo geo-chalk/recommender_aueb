@@ -51,12 +51,13 @@ Use docker:
 docker build -t aueb:latest -f setup/Dockerfile .
 ```
 
-3. Run the container. For local dev use the 2nd option, so that the changes made in your code
-   are synced with the container.
+3. Run the container. 
 ```
 docker run -d --name aueb_docker -it aueb:latest
 ```
 
+For local dev you can add the `-v` argument, 
+so that the changes made in your code are synced with the container.
 ```
 docker run -d -v .:/workspace --name aueb_docker -it aueb:latest
 ```
@@ -187,3 +188,13 @@ Example for this repo:
 
 1. cd to project root
 2. run `python src/main.py`
+
+## Input Arguments
+One CLI input argument has been defined, which will skip training in case
+the test and model files are already in the repository.
+
+The argument is `--skip-training` and can be used as follows:
+
+```
+python src/main.py --skip-training
+```

@@ -35,6 +35,7 @@ RUN mkdir /workspace
 # --- Make temp file for source code --- #
 COPY ./src /workspace/src
 COPY ./data /workspace/data
+COPY ./notebooks /workspace/notebooks
 
 # --- Set Workspace --- #
 WORKDIR "/workspace"

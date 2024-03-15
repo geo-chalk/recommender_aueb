@@ -54,8 +54,11 @@ def main(input_args: BaseArguments):
                              random_seed=42,
                              auto_class_weights='Balanced',  # Helps if the target classes are imbalanced
                              verbose=True)
+
         model.optimize(**{**MODEL_OPTIMIZE_PARAMS,
                        **{"param_distributions": MODEL_SEARCH_PARAMS}})
+
+        # save model
         pickle.dump(model.model, (MODEL_REGISTRY_DIR / BEST_MODEL_FILE_NAME).open(mode='wb'))
 
     # Make predictions on the test set

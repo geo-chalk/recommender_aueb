@@ -6,6 +6,7 @@ from pathlib import Path
 
 # General
 CUISINES: Tuple = ('Pizza', 'Burger', 'Pasta', 'Souvlaki', 'Sushi', 'Chinese')
+TARGET_VARIABLE: str = 'rating'
 
 # Paths
 RAW_DATA_DIR: Path = Path("data") / "raw"

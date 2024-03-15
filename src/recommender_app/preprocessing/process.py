@@ -60,7 +60,7 @@ class DataPreProcessor:
     def process(self, categorical_columns: List[str]):
         """
         Processes the data frame by converting string representations of lists to actual lists,
-        one-hot encoding each list-type column, and splitting the data into training and testing sets.
+        one-hot encoding each list-type column.
         """
         # Convert string representations of lists to actual lists for all list-type columns
         for column in categorical_columns:

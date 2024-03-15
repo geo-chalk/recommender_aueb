@@ -1,6 +1,6 @@
 import unittest
-from src.recommender_app.generators import Restaurant  # replace with your actual module
 from src.recommender_app.generators.restaurant_generator import generate_restaurants
+from src.recommender_app.generators.restaurant_generator import Restaurant
 
 
 class TestRestaurant(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestGenerateRestaurants(unittest.TestCase):
     def test_generate_restaurants(self):
         restaurants = generate_restaurants(rest_num=self.rest_num)
 
-        # dCheck if the correct number of restaurants are generate
+        # Check if the correct number of restaurants are generate
         self.assertEqual(len(restaurants), self.rest_num)
 
         # Check if all generated objects are instances of Restaurant class
