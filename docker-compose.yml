@@ -8,4 +8,4 @@ services:
       - .:/workspace
     ports:
       - "8989:8989"
-    command: "python src/main.py --skip-training"
+#    command: "python src/main.py --skip-training"
