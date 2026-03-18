@@ -14,7 +14,9 @@ from recommender_app.utils.variables import (
 from recommender_app.preprocessing.process import DataPreProcessor
 
 
-def generate_segments() -> pd.DataFrame:
+def generate_segments(restaurant_dict: dict,
+                      segment_list: List[dict]
+                      ) -> pd.DataFrame:
     """
     Generates restaurant data, applies user preference segments, processes the data and returns it as a DataFrame.
 
@@ -28,11 +30,11 @@ def generate_segments() -> pd.DataFrame:
         A DataFrame containing the processed segmented data.
     """
     # generate restaurants
-    restaurants = generate_restaurants(**RESTAURANT)
+    restaurants = generate_restaurants(**restaurant_dict)
 
     # generate segments
     file_paths = []
-    for segment in [SEGMENT_1, SEGMENT_2]:
+    for segment in segment_list:
         segment_path = RatingsGenerator(output_dir=RAW_DATA_DIR).generate_segment(restaurants=restaurants,
                                                                                   **segment)
         file_paths.append(segment_path)

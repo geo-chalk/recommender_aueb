@@ -13,9 +13,14 @@ RAW_DATA_DIR: Path = Path("data") / "raw"
 PROCESSED_DATA_DIR: Path = Path("data") / "processed"
 MODEL_REGISTRY_DIR: Path = Path("data") / "model_registry"
 SEGMENTS_FILE_NAME: str = "segments.csv"
-TRAIN_FILE_NAME: str = "train.csv"
-TEST_FILE_NAME: str = "test.csv"
+TRAIN_FILE_NAME: str = "train.parquet"
+TEST_FILE_NAME: str = "test.parquet"
 BEST_MODEL_FILE_NAME: str = "best_model.pkl"
+
+# Configuration for MLflow
+MLFLOW_TRACKING_URI = "http://mlflow:5000"
+REGISTERED_MODEL_NAME = "recommender_model"
+ALIAS = "champion"
 
 # Create Paths if needed
 RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -55,13 +60,13 @@ SEGMENT_2 = dict(
 # Model params
 MODEL_OPTIMIZE_PARAMS = dict(
     n_iter=10,
-    n_jobs=-1,
+    n_jobs=2,
     cv=5,
-    verbose=2
+    verbose=3
 )
 
 MODEL_SEARCH_PARAMS: dict = {
-    'iterations': [500, 1000],
+    'iterations': [100, 200, 1000],
     'depth': [3, 4, 5, 6],
-    'learning_rate': [0.01, 0.5, 0.1]
+    'learning_rate': [0.01, 0.1, 0.5, 0.8]
 }

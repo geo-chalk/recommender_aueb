@@ -81,28 +81,42 @@ class ModelTrainer(CatBoostClassifier):
         """Makes predictions on the given data."""
         return self.model.predict(data)
 
-    def optimize(self,
-                 **kwargs):
+    def optimize(self, **kwargs):
         """
         Optimizes the CatBoostClassifier model using RandomizedSearchCV.
-        Once the best model is found, the model is re-trained using the entire dataset
-
-        Parameters
-            **kwargs: Additional keyword arguments for the RandomizedSearchCV.
+        Re-trains the final model using the best found iteration count to prevent overfitting.
         """
         scorer = make_scorer(accuracy_score)
-        clf_grid = RandomizedSearchCV(estimator=self.model,
-                                      scoring=scorer,
-                                      **kwargs)
-        # Fit GridSearchCV
+
+        # 1. Setup RandomizedSearchCV with verbose=0 to hide Scikit-Learn search logs
+        clf_grid = RandomizedSearchCV(
+            estimator=self.model,
+            scoring=scorer,
+            **kwargs
+        )
+
+        # 2. Fit the search with logging_level='Silent' for CatBoost
         clf_grid.fit(
             self.X_train, self.y_train,
             cat_features=self.categorical_features_indices,
             eval_set=(self.X_valid, self.y_valid),
-            early_stopping_rounds=50  # Stops training if the validation metric is not improving
+            early_stopping_rounds=50,
+            logging_level='Silent'
         )
 
-        # re-train using all the data
-        clf_grid.best_estimator_.fit(self.X, self.y,
-                                     cat_features=self.categorical_features_indices)
-        self.model = clf_grid.best_estimator_
+        # 3. Retrieve the best parameters and the optimal number of trees (best_iteration_)
+        best_params = clf_grid.best_params_
+        best_iter = clf_grid.best_estimator_.get_best_iteration()
+
+        # 4. Update the best params with the iteration count found during search
+        # We set iterations=best_iter + 1 because CatBoost iterations are 0-indexed
+        best_params['iterations'] = best_iter + 1
+
+        # 5. Final re-train on the entire dataset (X, y) silently
+        print(f"Optimization complete. Best Params: {best_params}")
+        self.model = CatBoostClassifier(**best_params, logging_level='Silent', allow_writing_files=False)
+
+        self.model.fit(
+            self.X, self.y,
+            cat_features=self.categorical_features_indices
+        )
