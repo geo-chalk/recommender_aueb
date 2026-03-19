@@ -19,19 +19,16 @@ from recommender_app.utils.variables import (
     TARGET_VARIABLE,
     MLFLOW_TRACKING_URI
 )
+import asyncio
+from contextlib import asynccontextmanager
 
 # Ensure logs are visible in the terminal
 logger = logging.getLogger("uvicorn.error")
 
-app = FastAPI(title="Restaurant Recommender CSV API")
 
 # Global container to keep the model in memory
 MODEL_HOLDER = {"model": None, "metadata": None}
-ALIAS: str = "champion"
-
-# Initialize mlflow
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
-client = MlflowClient()
+ALIAS: str = "latest"
 
 
 def _load_model_by_alias(registered_model_name: str = REGISTERED_MODEL_NAME,
@@ -61,6 +58,30 @@ def _load_model_by_alias(registered_model_name: str = REGISTERED_MODEL_NAME,
         logger.info("Successfully loaded Champion model.")
     except Exception as e:
         logger.error(f"FATAL: Could not load model from MLflow: {e}")
+
+async def model_refresher():
+    """Worker that triggers the reload every 60 seconds."""
+    while True:
+        await asyncio.sleep(60)
+        _load_model_by_alias(REGISTERED_MODEL_NAME, ALIAS)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Load model immediately
+    _load_model_by_alias(REGISTERED_MODEL_NAME, ALIAS)
+    # Start the background task
+    refresh_task = asyncio.create_task(model_refresher())
+    yield
+    # Shutdown: Clean up task
+    refresh_task.cancel()
+
+app = FastAPI(title="Restaurant Recommender CSV API", lifespan=lifespan)
+
+# Initialize mlflow
+mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+client = MlflowClient()
+
+
 
 
 @app.on_event("startup")

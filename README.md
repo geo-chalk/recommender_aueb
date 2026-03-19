@@ -20,11 +20,15 @@ docker exec -it <CONTAINER ID> uv run src/main.py
 The more runs you test (by changing the configuration under `src/recommender_app/utils/variables.py`) the more model
 versions you will generate. I would suggest to at least have two versions.
 
-One the model has been trained and registered to mlflow, you'll have to assign at least a `champion` alias to one of the
+One the model has been trained and registered to mlflow, you can assign a `champion` alias to one of the
 models. This can be achieved through the registry by clicking on 'recommender_model' and adding the alias, as follows:
 ![img.png](docs/img.png)
 
-Once this is done, all services should work as expected.
+The fastAPI service, will try to load the latest model every 60 seconds. This means that after training your models,
+you can just wait for the service to fetch the latest version. However, you could also use the `/api/v1/switch-model`
+endpoint to manually force the change. If you used an alias for one of the models, you can also use that.
+
+After the trained models have been loaded, all services should work as expected.
 
 ## 🏗️ Service Architecture
 
