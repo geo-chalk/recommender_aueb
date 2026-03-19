@@ -55,7 +55,7 @@ def _load_model_by_alias(registered_model_name: str = REGISTERED_MODEL_NAME,
             "version": model_version
         }
 
-        logger.info("Successfully loaded Champion model.")
+        logger.info(f"Successfully loaded `{alias}` model.")
     except Exception as e:
         logger.error(f"FATAL: Could not load model from MLflow: {e}")
 

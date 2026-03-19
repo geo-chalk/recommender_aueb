@@ -1,7 +1,8 @@
 # Recommender System Deployment Guide
 
-This project uses a microservices architecture managed by Docker to handle model
-training, API serving, and a user interface.
+This project is part of AUEB's MSc in Data Science post grad course. It uses a microservices architecture managed by
+Docker to handle model
+training, API serving, and a user interface, in the wider context of recommender systems.
 
 ## Recommended workflow
 
@@ -21,12 +22,14 @@ The more runs you test (by changing the configuration under `src/recommender_app
 versions you will generate. I would suggest to at least have two versions.
 
 One the model has been trained and registered to mlflow, you can assign a `champion` alias to one of the
-models. This can be achieved through the registry by clicking on 'recommender_model' and adding the alias, as follows:
-![img.png](docs/img.png)
+models. **The alias should be assigned to Version 2 and above**. This can be achieved through the registry by clicking
+on 'recommender_model' and adding the alias, as follows:
+![mlflow.png](docs/mlflow.png)
 
-The fastAPI service, will try to load the latest model every 60 seconds. This means that after training your models,
+The fastAPI service, will try to load the `latest` model every 60 seconds. This means that after training your models,
 you can just wait for the service to fetch the latest version. However, you could also use the `/api/v1/switch-model`
-endpoint to manually force the change. If you used an alias for one of the models, you can also use that.
+endpoint to manually force the change. If you used an alias for one of the models, you can also use that (e.g.
+challenger).
 
 After the trained models have been loaded, all services should work as expected.
 
@@ -39,7 +42,7 @@ The application is built as a set of interconnected microservices that manage th
 * All training metrics and serialized model files are logged to the **mlflow** server, which serves as a centralized
   model registry.
 * The **recommender-api** fetches the latest production-ready models to provide a RESTful FastAPI backend for
-  making predictions.
+  making predictions or generate restaurants.
 * Finally, the **recommender-ui** provides a Streamlit-based interface that communicates with the API
   to display dashboards and allow users to interact with the recommendation engine in real-time or via batch processing.
   The data, to run the predictors, can be found under `./data/processed/test.parquet` once the models have been trained.
