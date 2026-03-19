@@ -14,7 +14,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 
 # Note: Since this is a simple UI, we extract just the python requirements
-RUN uv pip install --system streamlit requests pandas pyarrow
+RUN uv pip install --system streamlit requests pandas pyarrow plotly
 
 # Copy the source code
 COPY ./src ./src

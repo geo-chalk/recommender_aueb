@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="Recommender System", layout="wide")
+st.set_page_config(page_title="Recommender System", layout="centered")
 
 st.title("🤖 Restaurant Recommender System")
 st.markdown("""

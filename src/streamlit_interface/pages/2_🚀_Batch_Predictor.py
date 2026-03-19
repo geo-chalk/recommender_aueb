@@ -4,6 +4,8 @@ import requests
 import io
 import os
 
+st.set_page_config(layout="wide")
+
 API_URL = os.getenv("API_URL", "http://localhost:8081")
 
 st.title("🚀 Prediction Performance")
