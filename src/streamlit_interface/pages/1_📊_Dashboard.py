@@ -9,7 +9,6 @@ st.set_page_config(layout="centered")
 API_URL = os.getenv("API_URL", "http://recommender-api:8081")
 
 
-# --- 1. THE FIX: Callback Function ---
 # This runs BEFORE the script reruns, ensuring the API is updated first.
 def handle_model_switch():
     # Access values directly from session state via widget keys
@@ -32,7 +31,6 @@ def handle_model_switch():
 
 st.title("📊 System Performance")
 
-# --- 2. Fetch Status ---
 # Because of the callback, this will now catch the NEW data on the first pass.
 try:
     start_time = time.time()

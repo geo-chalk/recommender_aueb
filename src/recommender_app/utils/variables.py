@@ -59,7 +59,7 @@ SEGMENT_2 = dict(
 
 # Model params
 MODEL_OPTIMIZE_PARAMS = dict(
-    n_iter=10,
+    n_iter=3,
     n_jobs=2,
     cv=5,
     verbose=3

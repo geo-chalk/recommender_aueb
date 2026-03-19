@@ -14,6 +14,7 @@ services:
       - JUPYTER_PORT=8989
     # Starts Jupyter by default as defined in the Dockerfile
     command: uv run jupyter lab --ip 0.0.0.0 --no-browser --allow-root
+#    command: "tail -F anything"
 
   # Service for the FastAPI Restaurant Generator
   recommender-api:
