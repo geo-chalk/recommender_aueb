@@ -3,7 +3,30 @@
 This project uses a microservices architecture managed by Docker to handle model
 training, API serving, and a user interface.
 
-## 🏗️ Service Architecture & Workflow
+## Recommended workflow
+
+Run the following command to start all services:
+
+```bash 
+docker compose up --build -d
+```
+
+Inside the `recommender-trainer` container, run the command (see below how to run commands inside a container):
+
+```bash 
+docker exec -it <CONTAINER ID> uv run src/main.py
+```
+
+The more runs you test (by changing the configuration under `src/recommender_app/utils/variables.py`) the more model
+versions you will generate. I would suggest to at least have two versions.
+
+One the model has been trained and registered to mlflow, you'll have to assign at least a `champion` alias to one of the
+models. This can be achieved through the registry by clicking on 'recommender_model' and adding the alias, as follows:
+![img.png](docs/img.png)
+
+Once this is done, all services should work as expected.
+
+## 🏗️ Service Architecture
 
 The application is built as a set of interconnected microservices that manage the entire machine learning lifecycle.
 
