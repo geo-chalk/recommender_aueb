@@ -42,6 +42,7 @@ The application is built as a set of interconnected microservices that manage th
   making predictions.
 * Finally, the **recommender-ui** provides a Streamlit-based interface that communicates with the API
   to display dashboards and allow users to interact with the recommendation engine in real-time or via batch processing.
+  The data, to run the predictors, can be found under `./data/processed/test.parquet` once the models have been trained.
 
 ## 🚀 Running the Application Services
 
