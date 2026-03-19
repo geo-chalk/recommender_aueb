@@ -1,11 +1,72 @@
-version: '3.8'
 services:
-  rec_sys:
+  # Service for Model Training and Development
+  recommender-trainer:
     build:
       context: .
       dockerfile: setup/Dockerfile
+    user: root
     volumes:
       - .:/workspace
+      - ./mlflow:/mlflow
     ports:
       - "8989:8989"
-#    command: "python src/main.py --skip-training"
+    environment:
+      - JUPYTER_PORT=8989
+    # Starts Jupyter by default as defined in the Dockerfile
+    command: uv run jupyter lab --ip 0.0.0.0 --no-browser --allow-root
+#    command: "tail -F anything"
+
+  # Service for the FastAPI Restaurant Generator
+  recommender-api:
+      build:
+        context: .
+        dockerfile: setup/Dockerfile_api
+        args:
+          - BASEIMAGE=python:3.11-slim
+      volumes:
+        - ./src:/workspace/src
+        - ./mlflow:/mlflow
+      ports:
+        - "8081:8081"
+      environment:
+        - PYTHONDONTWRITEBYTECODE=1
+        - PYTHONUNBUFFERED=1
+      # Use uv run here to ensure it uses the venv we created in the Dockerfile
+      command: uv run uvicorn --app-dir src app:app --reload --host 0.0.0.0 --port 8081
+      depends_on:
+        - recommender-trainer
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.10.1-full
+    container_name: mlflow_server
+    user: root
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./mlflow:/mlflow
+    environment:
+      - MLFLOW_SERVER_ALLOWED_HOSTS=* # Trusts all incoming Host headers
+    command: >
+      mlflow server
+      --backend-store-uri sqlite:///mlflow.db
+      --default-artifact-root /mlflow
+      --host 0.0.0.0
+      --port 5000
+      --disable-security-middleware
+      --allowed-hosts "*"
+
+  recommender-ui:
+      build:
+        context: .
+        dockerfile: setup/Dockerfile_ui
+      volumes:
+        - ./src:/workspace/src
+      ports:
+        - "8501:8501"
+      environment:
+        - API_URL=http://recommender-api:8081  # Correct URL for internal networking
+        - PYTHONUNBUFFERED=1
+      depends_on:
+        - recommender-api
+      networks:
+        - default

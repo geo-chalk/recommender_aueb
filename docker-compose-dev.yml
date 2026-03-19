@@ -1,0 +1,14 @@
+services:
+  rec_sys_dev:
+    build:
+      context: .
+      dockerfile: setup/Dockerfile_dev
+    volumes:
+      - ./data:/app/data
+      - ./mlruns:/app/mlruns
+      - ./notebooks:/app/notebooks
+      - ./src:/app/src
+    ports:
+      - "8989:8989"
+      - "8081:8081"
+    command: "tail -F anything"

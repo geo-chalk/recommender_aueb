@@ -16,31 +16,44 @@ RUN apt-get install -y git
 RUN apt-get install -y gcc
 
 
-## --- Install python --- #
-RUN true \
-    && python -m pip install --upgrade pip \
-    && python -m pip install --upgrade pip setuptools \
-    && python -m pip install \
-      ipython==8.20.0 \
-      numpy==1.26.4 \
-      pandas==2.1.4 \
-      scikit-learn==1.2.2 \
-      catboost==1.2 \
-      jupyter==1.0 \
-      jupyterlab==4.0.8
+# Install system libs (LightGBM needs libgomp1)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# --- pull official base image --- #
-RUN mkdir /workspace
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+WORKDIR /workspace
+
+# Copy dependency files first (Caching layer)
+COPY pyproject.toml uv.lock README.md ./
+
+# Install dependencies
+# --frozen: Error if lockfile is out of sync
+# --no-dev: Exclude dev dependencies (pytest, black, etc.)
+# --no-install-project: Don't install the current project yet, just libs
+# RUN uv sync --frozen --no-dev --no-install-project
+RUN uv sync --frozen --no-install-project
+
+# Enable the virtual environment
+# uv creates a .venv folder. We just add it to the path.
+ENV PATH="/workspace/.venv/bin:$PATH"
+
+# Copy source code
+COPY src/ ./src/
+
+# Security: Non-root user
+RUN useradd -m appuser && chown -R appuser /workspace
+USER appuser
+
 
 # --- Make temp file for source code --- #
 COPY ./src /workspace/src
 COPY ./data /workspace/data
 COPY ./notebooks /workspace/notebooks
 
-# --- Set Workspace --- #
-WORKDIR "/workspace"
-
 EXPOSE 8989
 
 # --- Start Jupyter Notebook --- #
-CMD ["jupyter", "notebook", "--ip", "0.0.0.0", "--no-browser", "--allow-root"]
+CMD ["uv", "run", "jupyter", "lab", "--ip", "0.0.0.0", "--no-browser", "--allow-root"]

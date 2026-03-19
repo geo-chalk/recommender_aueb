@@ -1,39 +1,48 @@
-# --- pull official base image --- #
+# 1. Define global ARG (must be before the first FROM)
 ARG BASEIMAGE=python:3.11-slim
 
-FROM $BASEIMAGE as base
+# --- Use the official uv image to copy the binary ---
+FROM ghcr.io/astral-sh/uv:latest AS uv_bin
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+# --- Pull official base image ---
+FROM ${BASEIMAGE}
 
-# ------ Set up workspace -------- #
-RUN true && apt-get update
-RUN apt update
-RUN apt-get install -y curl
-RUN apt-get update
-RUN apt-get install -y git
-RUN apt-get install -y gcc
+# 2. Re-declare the ARG here so this stage can see it (Docker scope rule)
+ARG BASEIMAGE
 
+# Install uv by copying it from the official image
+COPY --from=uv_bin /uv /uvx /bin/
 
-## --- Install python --- #
-RUN true \
-    && python -m pip install --upgrade pip \
-    && python -m pip install --upgrade pip setuptools \
-    && python -m pip install \
-      ipython==8.20.0 \
-      numpy==1.26.4 \
-      fastapi==0.110.0 \
-      uvicorn==0.28.0
+# Environment variables
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
+ENV PATH="/workspace/.venv/bin:$PATH"
 
-# --- pull official base image --- #
-RUN mkdir /workspace
+# ------ Set up workspace dependencies -------- #
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    git \
+    gcc \
+    && rm -rf /var/lib/apt/lists/*
 
-# --- Make temp file for source code --- #
-COPY ./src /workspace/src
+# Set Workspace
+WORKDIR /workspace
 
+# --- Install Python dependencies using uv --- #
+RUN uv venv /workspace/.venv
+RUN uv pip install \
+    ipython==8.20.0 \
+    numpy==1.26.4 \
+    fastapi==0.110.0 \
+    uvicorn==0.28.0 \
+    pandas==2.1.4 \
+    mlflow==3.10.1 \
+    catboost==1.2 \
+    python-multipart==0.0.22
 
-# --- Set Workspace --- #
-WORKDIR "/workspace"
+# --- Copy source code --- #
+COPY ./src ./src
 
-# --- Start Jupyter Notebook --- #
-CMD ["uvicorn", "--app-dir", "src", "main_app:app", "--reload", "--host", "0.0.0.0", "--port", "8081"]
+# --- Start Command --- #
+# Default to uvicorn, but docker-compose 'command' will override this
+CMD ["uv", "run", "uvicorn", "--app-dir", "src", "app:app", "--reload", "--host", "0.0.0.0", "--port", "8081"]
