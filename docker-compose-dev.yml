@@ -5,7 +5,7 @@ services:
       dockerfile: setup/Dockerfile_dev
     volumes:
       - ./data:/app/data
-      - ./mlruns:/app/mlruns
+      - ./mlflow:/app/mlflow
       - ./notebooks:/app/notebooks
       - ./src:/app/src
     ports:

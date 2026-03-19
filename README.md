@@ -1,200 +1,124 @@
-# Recommander Systems 
+# Recommender System Deployment Guide
 
-## Deploying Machine Learning Applications
-Migrating from Jupyter Notebooks to Python Applications
+This project uses a microservices architecture managed by Docker to handle model
+training, API serving, and a user interface.
 
-Course Material for Recommender Systems  (INF499) - MSc Data Science
+## 🏗️ Service Architecture & Workflow
 
-## Set up environments
-### Option 1:
+The application is built as a set of interconnected microservices that manage the entire machine learning lifecycle.
 
-Manually create the environment and add dependencies as the project is being worked.
-This is a good option to start building the application, as you won't know beforehand
-which libraries you are going to use.
-`conda create -n rec_sys_app python=3.11.0 ipython --yes `
+* The **recommender-trainer** acts as the development hub, where data is processed and models are trained using Jupyter
+  Lab.
+* All training metrics and serialized model files are logged to the **mlflow** server, which serves as a centralized
+  model registry.
+* The **recommender-api** fetches the latest production-ready models to provide a RESTful FastAPI backend for
+  making predictions.
+* Finally, the **recommender-ui** provides a Streamlit-based interface that communicates with the API
+  to display dashboards and allow users to interact with the recommendation engine in real-time or via batch processing.
 
-`conda activate rec_sys_app`
+## 🚀 Running the Application Services
 
-### Option 2:
-After finishing the project, create a conda environment, with the libraries you have used in the project:
+To start the entire ecosystem, ensure you are in the project root and run:
 
-Reference file:
-```yaml
-name: rec_sys_app
-channels:
-  - defaults
-dependencies:
-  - python=3.11.0
-  - ipython=8.20.0
-  - numpy=1.26.4
-  - pandas=2.1.4
-  - scikit-learn=1.2.2
-  - pip=23.3.1
-  - catboost=1.2
-  - jupyter=1.0
-  - jupyterlab=4.0.8
+```bash
+docker compose up --build
 ```
 
-Use the following commands to create and activate:
-```
-conda env create -f setup/conda_env.yml
-conda activate rec_sys_app
-```
+Once the containers are running, you can access the different services at the following URLs:
 
-### Option 3:
-Use docker:
+| Service             |                       Description                        |                    URL |
+|---------------------|:--------------------------------------------------------:|-----------------------:|
+| **User Interface**  |   Streamlit dashboard for predictions and monitoring.    |  http://localhost:8501 |
+| **FastAPI**         |      REST API for real-time and batch predictions.       |  http://localhost:8081 |
+| **MLflow Server**   |   Tracking server for experiments and model registry.    |  http://localhost:5000 |
+| **Trainer/Jupyter** | Environment for model training and notebook development. | http://localhost:8989* |
 
-1. cd to the project root.
-2. Build the docker image
+*you should check the docker logs in order to access jupyter & get the token link.
 
-```
-docker build -t aueb:latest -f setup/Dockerfile .
-```
+You can attach to each container using the `<CONTAINER ID>` and the command:
 
-3. Run the container. 
-```
-docker run -d --name aueb_docker -it aueb:latest
-```
-
-For local dev you can add the `-v` argument, 
-so that the changes made in your code are synced with the container.
-```
-docker run -d -v .:/workspace --name aueb_docker -it aueb:latest
-```
-
-4. Run the python script. You can either include or exclude the --skip-training flag
-
-```
-docker exec -it aueb_docker python src/main.py --skip-training
-```
-
-To access the notebooks make sure that there is not another service running 
-in the port 8989 (which is defined in the Dockerfile) and run the following command
-in step 3 instead:
-```
-docker run -d -v .:/workspace --name aueb_docker -p 8989:8989 -it aueb:latest
-```
-
-To get the jupyter access token, either get the token from docker desktop console
-or run:
-```
-docker logs aueb_docker
-```
-
-
-## Best Practices
-
-### Set up folder structure
-There are multiple ways to set up a python environment. Usually, the code 
-is maintained under the `./src` folder. Inside the `src` folder, 
-more folders (modules) should be places, each of which should have a common *'theme'*.
-
-```
-.
-├── archive
-│   └── src
-├── data
-│   ├── model_registry
-│   ├── processed
-│   └── raw
-├── notebooks
-├── setup
-├── src
-│   └── recommender_app
-└── tests
-```
-### Clean Code
-
-For more info see: https://peps.python.org/pep-0008/
-
-### Use OOP approach 
-Try using Object-Oriented-Programming approaches, but using classes and functions.
-Methods and Objects should have easy to understand names and executes small functions.
-Moreover, any possible argument that is subject to change should be part of the method arguments.
-
-### Docstrings
-It is very important to make the code clear and easy to read. <br>
-How many times have you tried to understand what your code does? 
-This can be avoided using docstrings and comments. 
-
-### Typehints
-Python is a dynamically typed language, and a results, typehints are important.
-They make sure that we are expecting the correct type, which is useful as our code 
-becomes more and more complex.
-
-Moreover, in modern editors, we can hover over a function and see the expected 
-```Python
-def my_example_func(foo: str) -> list[str]:
-    return [foo for _ in range(10)]
-
-incorrect_type: str = my_example_func("rec_sys")
-```
-
-### Example:
-Try answering the following questions:
-* What does the function below does? 
-* What type should the input arguments be?
-* What type will it return?
-Hard to understand
-```python
-import math
-def evaluate(x, n_terms):
-    result = 0.0
-    sign = 1
-    for i in range(0, n_terms):
-        term = (x**(2*i + 1)) / math.factorial(2*i + 1)
-        if i % 2 == 1:
-            sign *= -1
-        result += sign * term
-    return result
-```
-
-How about now?
-```python
-import math
-def evaluate_polynomial(x: float, n_terms: int) -> float:
-    """
-    Evaluate a trigonometric expression using Taylor series approximation.
-    
-    The expression is evaluated using the Taylor series expansion of sin(x):
-    sin(x) ≈ x - x^3/3! + x^5/5! - x^7/7! + ...
-
-    Parameters:
-    x: The angle in radians.
-    n_terms: The number of terms to use in the Taylor series approximation.
-
-    Returns:
-    float: The value of the trigonometric expression at the given angle.
-    
-    >>> evaluate_polynomial(math.pi/4, 10)
-    0.7071067811865476
-    """
-    result = 0.0
-    sign = 1
-    for i in range(0, n_terms):
-        term = (x**(2*i + 1)) / math.factorial(2*i + 1)
-        if i % 2 == 1:
-            sign *= -1
-        result += sign * term
-    return result
+```bash
+docker exec -it `<CONTAINER ID>` /bin/bash
 ```
 
 ## Running the code
-The repository should contain a `main.py` function under `src` which would execute the program
-and generate the desired output.
 
-Provide clear instruction so that code can be reproduced.
-Example for this repo:
+Run:
 
-1. cd to project root
-2. run `python src/main.py`
+```bash
+docker ps
+```
+
+in order to find the `<CONTAINER ID>` which corresponds to the `<IMAGE>` named `recommender_aueb-recommender-trainer`.
+
+Once you have the id run the following command to train a model and register it to mlflow:
+
+```bash
+docker exec -it <CONTAINER ID> uv run src/main.py
+```
 
 ## Input Arguments
-One CLI input argument has been defined, which will skip training in case
-the test and model files are already in the repository.
 
-The argument is `--skip-training` and can be used as follows:
+One CLI input argument has been defined, which will skip training, provided the models have been trained and logged to
+mlflow.
+
+The argument is `--skip-training` and can be used as follows (if attached to the container):
 
 ```
-python src/main.py --skip-training
+uv run src/main.py --skip-training
 ```
+
+## 🛠️ Development Environment
+
+If you need to access the project configuration, manage dependencies in `pyproject.toml`, or perform manual development
+tasks, use the dedicated development container.
+
+1. **Start the Dev Container**<br>
+   The dev container is configured to stay active indefinitely without running a specific application, allowing you to "
+   attach" to it.
+    ```Bash
+   docker compose -f docker-compose-dev.yml up -d --build
+   ```
+
+2. **Access the Environment**<br>
+   To enter the container and interact with the filesystem (including `pyproject.toml`):
+   ```Bash
+   docker exec -it <CONTAINER ID> /bin/bash
+   ```
+
+3. **Managing Dependencies**<br>
+   Inside the dev container, you can use `uv` to manage the project dependencies and create the
+   `pyproject.toml` and `uv.lock` files:
+    * Initialise projects:
+      ```bash
+      uv init
+      ```
+    * Add prod dependencies:
+      ```bash
+      uv add "ipython==8.20.0" "numpy==1.26.4" "pandas==2.1.4" "scikit-learn==1.2.2" "catboost==1.2" "mlflow==3.10.1"
+      ```
+    * Add dev dependencies:
+      ```bash
+      uv add --dev "pipreqs" "isort>=7.0.0" "jupyterlab>=4.5.0" "jupyterlab-code-formatter>=3.0.2" "jupyterlab-rise>=0.43.1" "black>=25.11.0"
+      ```
+    * You can start jupyter lab from the container, now that everything is installed, to test your code. You won't be
+      able to run `main.py` from this dev container as you'll need mlflow running.
+      ```bash
+      uv run jupyter lab --ip 0.0.0.0  --port 8989 --no-browser --allow-root
+      ```
+    * Once the two files have been created and finalised, you can copy them from the container to your local directory
+      using:
+     ```
+     docker cp <CONTAINER ID>:/app/pyproject.toml .
+     docker cp <CONTAINER ID>:/app/uv.lock .
+     ```
+
+These files can then be used to build the production containers.
+
+## 📂 Project Best Practices
+
+* **Clean Code**: Follow `PEP 8` standards for Python styling.
+* **Type Hints**: Always use type hints to ensure code clarity and reduce bugs in complex logic.
+* **Docstrings**: Use proper documentation for functions to explain parameters and return types clearly.
+* **Folder Structure**: Maintain code within the `./src` directory, separated by functional modules like
+  `recommender_app`, `ml`, and `preprocessing`.
